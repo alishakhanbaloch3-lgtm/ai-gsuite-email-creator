@@ -1,0 +1,174 @@
+{
+  "name": "Gmail Creator",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "150VIeddWl3y3WtD0nQ5lwqkc9xaPTcZkTT1eqYgWq5Q",
+          "mode": "list",
+          "cachedResultName": "Workspace User Onboarding.",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/150VIeddWl3y3WtD0nQ5lwqkc9xaPTcZkTT1eqYgWq5Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/150VIeddWl3y3WtD0nQ5lwqkc9xaPTcZkTT1eqYgWq5Q/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b1d4d3f9-904e-4f94-ab1b-1acaab164f5d",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "pL3Zc4gm6pRHBpOt",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        224,
+        0
+      ],
+      "id": "19b2b2ee-6449-45b3-ada1-f8ad50a3e535",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "const chars = \"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*\";\nlet password = \"\";\nfor (let i = 0; i < 12; i++) {\n  password += chars.charAt(Math.floor(Math.random() * chars.length));\n}\n\nreturn {\n  json: {\n    ...$input.item.json,\n    tempPassword: password\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        -32
+      ],
+      "id": "01c22b74-2fad-4939-bdae-852f66f0d218",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=First Name: {{ $json[\"First Name\"] }}\nLast Name: {{ $json[\"Last Name\"] }}\nUsername: {{ $json.Username }}\nPassword: {{ $json.tempPassword }}",
+        "options": {
+          "systemMessage": "You are a dedicated Workspace Email Creator Assistant. Your sole task is to process incoming user data (names, preferred usernames, and passwords) and generate clean parameters required for batch Google Workspace email creation.\n\nKey Guidelines:\n1. Extract and format the First Name, Last Name, Primary Email (using the verified domain), and Password for each user.\n2. Ensure usernames contain only valid characters (alphanumeric, lowercase, no spaces or special symbols except dots).\n3. Always respond in a clean, structured format (or JSON) so the next workflow node can process it without errors.\n4. If any user details are missing (e.g., password or last name), handle them gracefully using default/fallback values."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        560,
+        -32
+      ],
+      "id": "5ad5e651-eee6-41e5-9da1-04fdc77cdb3e",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        432,
+        176
+      ],
+      "id": "fb1c9e9b-40be-4293-8573-2aaf891fcd15",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "qogp1cesoFOiuEOG",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "eb767d45-8cea-428c-939f-05445192d7f3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f6b16affba5087eaec7aa0bb6c38e73b6a1c12689f645f19c2844d854577e097"
+  },
+  "nodeGroups": [],
+  "id": "xzkXJXqfQONjUuvz",
+  "tags": []
+}
